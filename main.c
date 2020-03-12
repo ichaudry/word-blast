@@ -14,17 +14,10 @@
 #include <string.h>
 
 
-void *threadTest(void *x)
-{
-    int tid;
-    tid = *((int *) x);
-    printf("Hi from thread %d!\n", tid);
-    return NULL;
-}
-
+void *threadTest(void *x);
+long readFile(void * filePointer, char * filePath , char * fileContent);
 
 int main(int argc, char ** argv){
-
     struct timespec startTime;
     struct timespec endTime;
     clock_gettime(CLOCK_REALTIME, &startTime);
@@ -39,10 +32,13 @@ int main(int argc, char ** argv){
     int thread_args[nThreads];
     int rc, i;
 
-    //Filename
+    //File related
     char * fileName;
     char * temp="./";
     char * filePath;
+    char * fileContent = 0;
+    long fileSize;
+    FILE * filePointer;
 
 
 
@@ -57,11 +53,8 @@ int main(int argc, char ** argv){
         strcpy(filePath, temp);
         strcat(filePath, fileName);
 
-
         printf("The following arguments were passed into program %s , %d\n",filePath,nThreads);
     }
-
-
 
     else{
         printf("Wrong format for passing arguments. Please follow the following convention \n<name of executable> <filePath> <numberOfThreads>");
@@ -69,13 +62,13 @@ int main(int argc, char ** argv){
     }
 
 
-    //Depending on the number of threads break up the file into appropriate chunks and pass each chunk to a thread
 
-    //The thread runs a function to read the file word by word and determine whether it satisfies the required constraints
+    //Read file and allocate a buffer
+    fileSize= readFile(filePointer,filePath,fileContent);
 
 
     /* spawn the threads */
-    for (i=1; i<=nThreads; ++i)
+    for (i=1; i<=nThreads; i++)
     {
         thread_args[i] = i;
         printf("spawning thread %d\n", i);
@@ -83,23 +76,19 @@ int main(int argc, char ** argv){
         rc = pthread_create(&threads[i], NULL, threadTest, (void *) &thread_args[i]);
     }
 
+
     /* wait for threads to finish */
-    for (i=1; i<=nThreads; ++i) {
+    for (i=1; i<=nThreads; i++) {
         //catch error by checking if rc is equal to zero
         rc = pthread_join(threads[i], NULL);
     }
-
-
 
     /**
      * Frees for dynamically allocated structures
      */
      //Free the file path string array
      free(filePath);
-
-
-
-
+     free(fileContent);
 
 
     /**
@@ -119,7 +108,54 @@ int main(int argc, char ** argv){
 
     return 0;
 
+}
 
+/**
+ *
+ * @param x
+ * @return
+ */
+void *threadTest(void *x)
+{
+    int tid;
+    tid = *((int *) x);
+    printf("Hi from thread %d!\n", tid);
+    return NULL;
 }
 
 
+
+/**
+ * This function reads a file and assigns a buffer on the heap for the file content
+ * Some part of this code has been obtained from: https://stackoverflow.com/a/174552
+ * @param filePointer
+ * @param filePath
+ * @param fileContent
+ * @return fileSize
+ */
+long readFile(void * filePointer, char * filePath , char * fileContent){
+    filePointer = fopen (filePath, "r");
+    long fileSize;
+
+    if (filePointer)
+    {
+        fseek (filePointer, 0, SEEK_END);
+        fileSize = ftell (filePointer);
+        fseek (filePointer, 0, SEEK_SET);
+        fileContent = malloc (fileSize);
+        if (fileContent)
+        {
+            fread (fileContent, 1, fileSize, filePointer);
+        }
+        fclose (filePointer);
+    }
+
+    if (fileContent)
+    {
+        // start to process your data / extract strings here...
+        printf("The buffer was correctly allocated using what was in the text file\n");
+//        printf("%s",fileContent);
+    }
+
+    return fileSize;
+}
