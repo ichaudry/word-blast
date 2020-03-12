@@ -13,7 +13,6 @@
 #include <pthread.h>
 #include <string.h>
 
-
 void *threadTest(void *x);
 long readFile(void * filePointer, char * filePath , char * fileContent);
 
@@ -33,39 +32,24 @@ int main(int argc, char ** argv){
     int rc, i;
 
     //File related
-    char * fileName;
-    char * temp="./";
     char * filePath;
     char * fileContent = 0;
     long fileSize;
     FILE * filePointer;
 
-
-
     //Get command line arguments to know which file to read and how many threads to create
     if(argc == 3){
-        fileName=argv[1];
+        filePath=argv[1];
         nThreads=atoi(argv[2]);
-
-        //Needs to freed after use
-        filePath = malloc(strlen(fileName) + strlen(temp) + 1);
-
-        strcpy(filePath, temp);
-        strcat(filePath, fileName);
-
-        printf("The following arguments were passed into program %s , %d\n",filePath,nThreads);
+//        printf("The following arguments were passed into program %s , %d\n",filePath,nThreads);
     }
-
     else{
         printf("Wrong format for passing arguments. Please follow the following convention \n<name of executable> <filePath> <numberOfThreads>");
         return 0;
     }
 
-
-
     //Read file and allocate a buffer
     fileSize= readFile(filePointer,filePath,fileContent);
-
 
     /* spawn the threads */
     for (i=1; i<=nThreads; i++)
@@ -76,7 +60,6 @@ int main(int argc, char ** argv){
         rc = pthread_create(&threads[i], NULL, threadTest, (void *) &thread_args[i]);
     }
 
-
     /* wait for threads to finish */
     for (i=1; i<=nThreads; i++) {
         //catch error by checking if rc is equal to zero
@@ -86,8 +69,6 @@ int main(int argc, char ** argv){
     /**
      * Frees for dynamically allocated structures
      */
-     //Free the file path string array
-     free(filePath);
      free(fileContent);
 
 
@@ -122,7 +103,6 @@ void *threadTest(void *x)
     printf("Hi from thread %d!\n", tid);
     return NULL;
 }
-
 
 
 /**
