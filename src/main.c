@@ -12,9 +12,21 @@
 #include <time.h>
 #include <pthread.h>
 #include <string.h>
+#include "hashtable.h"
 
-void *threadTest(void *x);
 long readFile(void * filePointer, char * filePath , char * fileContent);
+void *threadTest(void *x);
+
+
+/**
+ * Here is the plan on how I am going to do it.
+ * Break the file buffer into no of parts based on how many threads it needs to run on
+ *
+ * Start the threads with the parameters
+ *
+ *
+ */
+
 
 int main(int argc, char ** argv){
     struct timespec startTime;
@@ -66,10 +78,32 @@ int main(int argc, char ** argv){
         rc = pthread_join(threads[i], NULL);
     }
 
+
+
+
     /**
      * Frees for dynamically allocated structures
      */
      free(fileContent);
+
+
+     /**
+      * Testing Hashmap
+      */
+        ht_t *ht = ht_create();
+        ht_set(ht, "name1", "em");
+        ht_set(ht, "name2", "russian");
+        ht_set(ht, "name3", "pizza");
+        ht_set(ht, "name4", "doge");
+        ht_set(ht, "name5", "pyro");
+        ht_set(ht, "name6", "joost");
+        ht_set(ht, "name7", "kalix");
+        ht_dump(ht);
+
+
+        //Test if the freeing of hash table is completing successfully
+        ht_free(ht);
+
 
 
     /**
@@ -105,6 +139,14 @@ void *threadTest(void *x)
 }
 
 
+
+void getWords(){
+
+
+
+}
+
+
 /**
  * This function reads a file and assigns a buffer on the heap for the file content
  * Some part of this code has been obtained from: https://stackoverflow.com/a/174552
@@ -134,6 +176,7 @@ long readFile(void * filePointer, char * filePath , char * fileContent){
     {
         // start to process your data / extract strings here...
         printf("The buffer was correctly allocated using what was in the text file\n");
+        printf("The size of the file is %lu\n",strlen(fileContent));
 //        printf("%s",fileContent);
     }
 
