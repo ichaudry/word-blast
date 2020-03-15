@@ -4,7 +4,7 @@
 #include <string.h>
 #include "hashtable.h"
 
-#define TABLE_SIZE 100000
+#define TABLE_SIZE 1000000
 
 
 unsigned int hash(const char *key) {

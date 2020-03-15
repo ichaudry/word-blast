@@ -14,8 +14,14 @@
 #include <string.h>
 #include "hashtable.h"
 
-long readFile(void * filePointer, char * filePath , char * fileContent);
+#define TOKENIZER_BUFFER_SIZE 64
+#define TOKENIZER_DELIMITER " ,.;:!?\t\n"
+#define INT2POINTER(a) ((char*)(intptr_t)(a))
+
+char *readFile(void * filePointer, char * filePath );
+char **tokenizeFileContents(char *fileContent);
 void *threadTest(void *x);
+ht_t * initHashTable(char ** tokens);
 
 
 /**
@@ -46,6 +52,7 @@ int main(int argc, char ** argv){
     //File related
     char * filePath;
     char * fileContent = 0;
+    char **tokens;
     long fileSize;
     FILE * filePointer;
 
@@ -61,7 +68,50 @@ int main(int argc, char ** argv){
     }
 
     //Read file and allocate a buffer
-    fileSize= readFile(filePointer,filePath,fileContent);
+    fileContent= readFile(filePointer,filePath);
+
+//    printf("%s\nThe above output is coming out of main.\n",fileContent);
+
+
+    tokens= tokenizeFileContents(fileContent);
+
+//
+//    ht_t *ht = ht_create();
+//
+////    int index=0;
+////
+////    char *token="hello";
+////
+////    printf("The token is: %s\n",token);
+//
+//    ht_set(ht,"hello",'1');
+
+
+
+
+//    while(1){
+//        if(tokens[index]==NULL){
+//            break;
+//        }
+//        char *token=tokens[index];
+//
+//        printf("The token is: %s\n",token);
+//
+//        ht_set(ht,token,1);
+//
+//
+//
+//        index++;
+//    }
+
+
+
+    /**
+    * Testing Hashmap
+    */
+    ht_t *ht = initHashTable(tokens);
+
+
 
     /* spawn the threads */
     for (i=1; i<=nThreads; i++)
@@ -84,25 +134,10 @@ int main(int argc, char ** argv){
     /**
      * Frees for dynamically allocated structures
      */
-     free(fileContent);
-
-
-     /**
-      * Testing Hashmap
-      */
-        ht_t *ht = ht_create();
-        ht_set(ht, "name1", "em");
-        ht_set(ht, "name2", "russian");
-        ht_set(ht, "name3", "pizza");
-        ht_set(ht, "name4", "doge");
-        ht_set(ht, "name5", "pyro");
-        ht_set(ht, "name6", "joost");
-        ht_set(ht, "name7", "kalix");
-        ht_dump(ht);
-
-
-        //Test if the freeing of hash table is completing successfully
-        ht_free(ht);
+    free(fileContent);
+    free(tokens);
+    //Test if the freeing of hash table is completing successfully
+    ht_free(ht);
 
 
 
@@ -125,6 +160,9 @@ int main(int argc, char ** argv){
 
 }
 
+
+
+
 /**
  *
  * @param x
@@ -140,11 +178,117 @@ void *threadTest(void *x)
 
 
 
-void getWords(){
+char **tokenizeFileContents(char *fileContent)
+{
+    int bufferSize = TOKENIZER_BUFFER_SIZE, position = 0;
+    char **tokens = malloc(bufferSize * sizeof(char*));
+    char *token;
 
+    if (!tokens) {
+        fprintf(stderr, "lsh: allocation error\n");
+        exit(EXIT_FAILURE);
+    }
 
+    token = strtok(fileContent, TOKENIZER_DELIMITER);
+    while (token != NULL) {
+//        printf("The token is: %s and the string length is: %lu\n",token,strlen(token));
 
+        if(strlen(token)>5){
+//            printf("The token is %s",token);
+//            //Covert the string to lowercase
+//            for(int i = 0; strlen(token); i++){
+//                token[i] = tolower(token[i]);
+//            }
+//            printf("The token is %s",token);
+            tokens[position] = token;
+            position++;
+        }
+
+        if (position >= bufferSize) {
+            bufferSize += TOKENIZER_BUFFER_SIZE;
+            tokens = realloc(tokens, bufferSize * sizeof(char*));
+            if (!tokens) {
+                fprintf(stderr, "lsh: allocation error\n");
+                exit(EXIT_FAILURE);
+            }
+        }
+
+        token = strtok(NULL, TOKENIZER_DELIMITER);
+    }
+
+    tokens[position] = NULL;
+
+//    for(int i=0;i<position;i++){
+//        printf("The tokens in the array are: %s\n",tokens[i]);
+//    }
+
+    return tokens;
 }
+
+
+
+
+
+
+
+ht_t * initHashTable(char ** tokens){
+    ht_t *ht = ht_create();
+
+    ht_set(ht, "name1", "em");
+    ht_set(ht, "name2", "russian");
+    ht_set(ht, "name3", "pizza");
+    ht_set(ht, "name4", "doge");
+    ht_set(ht, "name5", "pyro");
+    ht_set(ht, "name6", "joost");
+    ht_set(ht, "name7", "kalix");
+
+    ht_dump(ht);
+
+    int index=0;
+
+    while(1){
+        if(tokens[index]==NULL){
+            break;
+        }
+        char * token=tokens[index];
+
+        if(ht_get(ht,token)==NULL){
+            ht_set(ht,token,"1");
+//            ht_dump(ht);
+        }
+        else{
+            int count=atoi(ht_get(ht,token))+1;
+            printf("the new count is: %d\n", count);
+            char  buf[30];
+            snprintf(buf, sizeof(buf), "%d", count);
+            printf  ("buf is now: %s\n", buf);
+
+
+//            sprintf(value,"%d",count);
+            ht_set(ht,token,&buf);
+        }
+        index++;
+    }
+
+    printf("The frequency of Pierre is : %s\n", ht_get(ht,"Prince"));
+
+
+
+//    ht_dump(ht);
+
+    return ht;
+}
+
+//
+//if(ht_get(ht,token)==NULL){
+//ht_set(ht,token,1);
+//ht_dump(ht);
+//}
+//else{
+//int count=atoi(ht_get(ht,token))+1;
+//ht_set(ht,token,count);
+//ht_dump(ht);
+//}
 
 
 /**
@@ -155,9 +299,10 @@ void getWords(){
  * @param fileContent
  * @return fileSize
  */
-long readFile(void * filePointer, char * filePath , char * fileContent){
+char * readFile(void * filePointer, char * filePath){
     filePointer = fopen (filePath, "r");
     long fileSize;
+    char * fileContent = 0;
 
     if (filePointer)
     {
@@ -174,11 +319,10 @@ long readFile(void * filePointer, char * filePath , char * fileContent){
 
     if (fileContent)
     {
-        // start to process your data / extract strings here...
         printf("The buffer was correctly allocated using what was in the text file\n");
-        printf("The size of the file is %lu\n",strlen(fileContent));
+//        printf("The size of the file is %lu\n",strlen(fileContent));
 //        printf("%s",fileContent);
     }
 
-    return fileSize;
+    return fileContent;
 }
