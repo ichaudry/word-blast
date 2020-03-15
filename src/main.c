@@ -16,22 +16,11 @@
 
 #define TOKENIZER_BUFFER_SIZE 64
 #define TOKENIZER_DELIMITER " ,.;:!?\t\n"
-#define INT2POINTER(a) ((char*)(intptr_t)(a))
 
 char *readFile(void * filePointer, char * filePath );
 char **tokenizeFileContents(char *fileContent);
-void *threadTest(void *x);
 ht_t * initHashTable(char ** tokens);
-
-
-/**
- * Here is the plan on how I am going to do it.
- * Break the file buffer into no of parts based on how many threads it needs to run on
- *
- * Start the threads with the parameters
- *
- *
- */
+void *threadTest(void *x);
 
 
 int main(int argc, char ** argv){
@@ -70,47 +59,11 @@ int main(int argc, char ** argv){
     //Read file and allocate a buffer
     fileContent= readFile(filePointer,filePath);
 
-//    printf("%s\nThe above output is coming out of main.\n",fileContent);
-
-
+    //Tokenize file content
     tokens= tokenizeFileContents(fileContent);
 
-//
-//    ht_t *ht = ht_create();
-//
-////    int index=0;
-////
-////    char *token="hello";
-////
-////    printf("The token is: %s\n",token);
-//
-//    ht_set(ht,"hello",'1');
-
-
-
-
-//    while(1){
-//        if(tokens[index]==NULL){
-//            break;
-//        }
-//        char *token=tokens[index];
-//
-//        printf("The token is: %s\n",token);
-//
-//        ht_set(ht,token,1);
-//
-//
-//
-//        index++;
-//    }
-
-
-
-    /**
-    * Testing Hashmap
-    */
+    //Populate hashtable with frequencies
     ht_t *ht = initHashTable(tokens);
-
 
 
     /* spawn the threads */
@@ -129,16 +82,13 @@ int main(int argc, char ** argv){
     }
 
 
-
-
     /**
      * Frees for dynamically allocated structures
      */
     free(fileContent);
     free(tokens);
-    //Test if the freeing of hash table is completing successfully
+    //To-do check if the hashtable has been successfully freed
     ht_free(ht);
-
 
 
     /**
@@ -159,7 +109,6 @@ int main(int argc, char ** argv){
     return 0;
 
 }
-
 
 
 
@@ -194,12 +143,12 @@ char **tokenizeFileContents(char *fileContent)
 //        printf("The token is: %s and the string length is: %lu\n",token,strlen(token));
 
         if(strlen(token)>5){
-//            printf("The token is %s",token);
-//            //Covert the string to lowercase
-//            for(int i = 0; strlen(token); i++){
-//                token[i] = tolower(token[i]);
-//            }
-//            printf("The token is %s",token);
+//            printf("The token is : %s and the string length is : %d\n",token,strlen(token));
+            //Covert the string to lowercase
+            for(int i = 0; i< strlen(token); i++){
+                token[i] = tolower(token[i]);
+            }
+//            printf("The token after conversion is : %s\n",token);
             tokens[position] = token;
             position++;
         }
@@ -218,32 +167,17 @@ char **tokenizeFileContents(char *fileContent)
 
     tokens[position] = NULL;
 
-//    for(int i=0;i<position;i++){
-//        printf("The tokens in the array are: %s\n",tokens[i]);
-//    }
-
     return tokens;
 }
 
 
-
-
-
-
-
+/**
+ * 
+ * @param tokens
+ * @return
+ */
 ht_t * initHashTable(char ** tokens){
     ht_t *ht = ht_create();
-
-    ht_set(ht, "name1", "em");
-    ht_set(ht, "name2", "russian");
-    ht_set(ht, "name3", "pizza");
-    ht_set(ht, "name4", "doge");
-    ht_set(ht, "name5", "pyro");
-    ht_set(ht, "name6", "joost");
-    ht_set(ht, "name7", "kalix");
-
-    ht_dump(ht);
-
     int index=0;
 
     while(1){
@@ -254,41 +188,23 @@ ht_t * initHashTable(char ** tokens){
 
         if(ht_get(ht,token)==NULL){
             ht_set(ht,token,"1");
-//            ht_dump(ht);
         }
         else{
             int count=atoi(ht_get(ht,token))+1;
-            printf("the new count is: %d\n", count);
             char  buf[30];
             snprintf(buf, sizeof(buf), "%d", count);
-            printf  ("buf is now: %s\n", buf);
-
-
-//            sprintf(value,"%d",count);
             ht_set(ht,token,&buf);
         }
         index++;
     }
 
-    printf("The frequency of Pierre is : %s\n", ht_get(ht,"Prince"));
-
-
+//    printf("The frequency of Pierre is : %s\n", ht_get(ht,"french"));
 
 //    ht_dump(ht);
 
     return ht;
 }
 
-//
-//if(ht_get(ht,token)==NULL){
-//ht_set(ht,token,1);
-//ht_dump(ht);
-//}
-//else{
-//int count=atoi(ht_get(ht,token))+1;
-//ht_set(ht,token,count);
-//ht_dump(ht);
-//}
 
 
 /**
@@ -320,8 +236,6 @@ char * readFile(void * filePointer, char * filePath){
     if (fileContent)
     {
         printf("The buffer was correctly allocated using what was in the text file\n");
-//        printf("The size of the file is %lu\n",strlen(fileContent));
-//        printf("%s",fileContent);
     }
 
     return fileContent;
