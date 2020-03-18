@@ -12,23 +12,34 @@
 #include <time.h>
 #include <pthread.h>
 #include <string.h>
+#include <ctype.h>
 #include "hashtable.h"
 
 #define TOKENIZER_BUFFER_SIZE 64
 #define TOKENIZER_DELIMITER " \t\v\n\r,.;:-'\"!?/()[]{}*''""—"
 
 
-//Thread arguments structure
+/**
+ * Struct for passing in arguments to threads
+ */
 typedef struct {
     unsigned long start;
     unsigned long end;
-    char * filePath;
 } threadArgs;
 
 
+/**
+ * Global variable for file path accessible by all threads
+ */
+char * filePath;
+pthread_mutex_t hashTable_mutex= PTHREAD_MUTEX_INITIALIZER;
+ht_t *ht;
 
+//Function declarations
 void *processFile(void *arguments);
-char * readFile(void * filePointer, char * filePath,long start, long end);
+char * readFile(void * filePointer,long start, long end);
+char **tokenizeFileContents(char *fileContent);
+
 
 int main(int argc, char ** argv){
     struct timespec startTime;
@@ -42,10 +53,13 @@ int main(int argc, char ** argv){
     pthread_t threads[nThreads];
     int rc, i;
 
-
-    //File related
-    char * filePath;
+    //File Pointer
     FILE * filePointer;
+
+    //Hash Table that stores final frequencies
+    ht= ht_create();
+//    ht_set(ht,"hello world","1");
+//    ht_dump(ht);
 
 
     //Get command line arguments to know which file to read and how many threads to create
@@ -81,7 +95,7 @@ int main(int argc, char ** argv){
     //Initialize the chunk size using the file size and the number of threads the program runs
     chunkSize=fileSize/nThreads;
 
-    printf("This is the chunk size: %lu\n\n\n\n\n", chunkSize);
+    printf("This is the chunk size: %lu\n\n\n", chunkSize);
 
     /* spawn the threads */
     for (i=0; i<nThreads; i++)
@@ -90,27 +104,40 @@ int main(int argc, char ** argv){
         threadArgs *threadArgs=malloc(sizeof(threadArgs));
         threadArgs->start=i*chunkSize;
         threadArgs->end=(i*chunkSize)+chunkSize;
-        threadArgs->filePath= malloc(sizeof(filePath));
-        threadArgs->filePath=filePath;
-        printf("This is the file path : %s\n",filePath);
 
 
-        printf("spawning thread %d\n\n\n", i+1);
+        printf("spawning thread %d\n", i+1);
 //        printf("The start of file for this thread is: %lu\n",threadArgs.start);
 //        printf("The end of file for this thread is: %lu\n",threadArgs.end);
         //Catch error by checking if rc is equal to zero
         rc = pthread_create(&threads[i], NULL, processFile, (void *) threadArgs);
+        if(rc!=0){
+            perror("Error creating thread");
+        }
 
+        //Call to free threadArgs after creation of last thread
         if(i==nThreads-1){
             free(threadArgs);
         }
     }
 
     /* wait for threads to finish */
-    for (i=1; i<=nThreads; i++) {
+    for (i=0; i<nThreads; i++) {
         //catch error by checking if rc is equal to zero
         rc = pthread_join(threads[i], NULL);
+        if(rc!=0){
+            perror("Error joining thread");
+            printf("Error code: %d\n",rc);
+        }
     }
+
+
+    ht_dump(ht);
+    printf("The frequency of Pierre is : %s\n", ht_get(ht,"prince"));
+
+    //To-do check if the hashtable has been successfully freed
+    ht_free(ht);
+
 
 
 
@@ -146,33 +173,54 @@ void *processFile(void *arguments)
     threadArgs * args= (threadArgs * )arguments;
     unsigned long start= args->start;
     unsigned long end= args->end;
-    char * filePath=args->filePath;
     FILE * filePointer;
-
-    printf("The start of file for this thread is: %lu\n",start);
-    printf("The end of file for this thread is: %lu\n",end);
-//    printf("This is the file path being recieved by the Thread %s\n\n\n",filePath);
+    int index=0;
 
 
-
-
+    printf("Start: %lu\n",start);
+    printf("End: %lu\n",end);
 
     //Read file to buffer
-    char * fileContent= readFile(filePointer,filePath,start,end);
+    char * fileContent= readFile(filePointer,start,end);
 
+    printf("This is the size of file buffer: %lu\n",strlen(fileContent));
 
-//    printf("Here is the file printing out using threads\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n%s",fileContent);
-    printf("the length the file content for thread is = %lu\n",strlen(fileContent));
+    //Tokenize file contents
+    char **tokens=tokenizeFileContents(fileContent);
 
-//    printf("Thread finished printing \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+    //Loop to iterate over all tokens
+    while(1){
+        if(tokens[index]==NULL){
+            break;
+        }
+        char * token=tokens[index];
 
+        pthread_mutex_lock(&hashTable_mutex);
+        if(ht_get(ht,token)==NULL){
+            ht_set(ht,token,"1");
+        }
+        else{
+            int count=atoi(ht_get(ht,token))+1;
+            char  *buf=malloc(32);
+            snprintf(buf, sizeof(buf), "%d", count);
+            ht_set(ht,token,buf);
+            free(buf);
+        }
+        pthread_mutex_unlock(&hashTable_mutex);
 
+        index++;
+    }
+
+    //Free the file content buffer
     free(fileContent);
+    free(tokens);
 
-//    printf("The start of file for this thread is: %lu\n",args.start);
-//    printf("The end of file for this thread is: %lu\n",args.end);
+
     return NULL;
 }
+
+
+
 
 
 
@@ -184,12 +232,11 @@ void *processFile(void *arguments)
  * @param fileContent
  * @return fileSize
  */
-char * readFile(void * filePointer, char * filePath,long start, long end){
+char * readFile(void * filePointer,long start, long end){
     char * fileContent = 0;
     filePointer = fopen (filePath, "r");
     long chunkSize= end-start;
-
-//    printf("This is the file path being recieved by the rad file function %s\n",filePath);
+    printf("This is the chunk size calculated by the readFile func: %ld\n",chunkSize);
 
     if (filePointer)
     {
@@ -199,17 +246,63 @@ char * readFile(void * filePointer, char * filePath,long start, long end){
         {
             fread (fileContent, 1, chunkSize, filePointer);
         }
+        else{
+            perror("Error");
+        }
         fclose (filePointer);
     }
     else{
-        printf("Unable to open file\n\n\n");
+        printf("Unable to open file\n\n");
     }
 
     if (fileContent)
     {
-        printf("The buffer was correctly allocated using what was in the text file\n\n\n");
+        printf("The buffer was correctly allocated using what was in the text file\n");
     }
 
     return fileContent;
 }
 
+
+char **tokenizeFileContents(char *fileContent)
+{
+    int bufferSize = TOKENIZER_BUFFER_SIZE, position = 0;
+    char **tokens = malloc(bufferSize * sizeof(char*));
+    char *token;
+
+    if (!tokens) {
+        fprintf(stderr, "lsh: allocation error\n");
+        exit(EXIT_FAILURE);
+    }
+
+    token = strtok(fileContent, TOKENIZER_DELIMITER);
+    while (token != NULL) {
+//        printf("The token is: %s and the string length is: %lu\n",token,strlen(token));
+
+        if(strlen(token)>5){
+//            printf("The token is : %s and the string length is : %d\n",token,strlen(token));
+            //Covert the string to lowercase
+            for(int i = 0; i< strlen(token); i++){
+                token[i] = tolower(token[i]);
+            }
+//            printf("The token after conversion is : %s\n",token);
+            tokens[position] = token;
+            position++;
+        }
+
+        if (position >= bufferSize) {
+            bufferSize += TOKENIZER_BUFFER_SIZE;
+            tokens = realloc(tokens, bufferSize * sizeof(char*));
+            if (!tokens) {
+                fprintf(stderr, "lsh: allocation error\n");
+                exit(EXIT_FAILURE);
+            }
+        }
+
+        token = strtok(NULL, TOKENIZER_DELIMITER);
+    }
+
+    tokens[position] = NULL;
+
+    return tokens;
+}
