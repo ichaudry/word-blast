@@ -32,7 +32,7 @@ typedef struct {
  * Global variable for file path accessible by all threads
  */
 char * filePath;
-pthread_mutex_t hashTable_mutex= PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t hashTable_mutex;
 ht_t *ht;
 
 //Function declarations
@@ -45,6 +45,11 @@ int main(int argc, char ** argv){
     struct timespec startTime;
     struct timespec endTime;
     clock_gettime(CLOCK_REALTIME, &startTime);
+//
+//    if (pthread_mutex_init(&hashTable_mutex, NULL) != 0) {
+//        printf("\n mutex init has failed\n");
+//        return 1;
+//    }
 
     //Number of threads
     int nThreads;
@@ -57,7 +62,7 @@ int main(int argc, char ** argv){
     FILE * filePointer;
 
     //Hash Table that stores final frequencies
-    ht= ht_create();
+//    ht= ht_create();
 //    ht_set(ht,"hello world","1");
 //    ht_dump(ht);
 
@@ -131,12 +136,13 @@ int main(int argc, char ** argv){
         }
     }
 
+//    pthread_mutex_destroy(&hashTable_mutex);
 
-    ht_dump(ht);
-    printf("The frequency of Pierre is : %s\n", ht_get(ht,"prince"));
+//    ht_dump(ht);
+//    printf("The frequency of Pierre is : %s\n", ht_get(ht,"prince"));
 
     //To-do check if the hashtable has been successfully freed
-    ht_free(ht);
+//    ht_free(ht);
 
 
 
@@ -193,26 +199,30 @@ void *processFile(void *arguments)
         if(tokens[index]==NULL){
             break;
         }
-        char * token=tokens[index];
-
-        pthread_mutex_lock(&hashTable_mutex);
-        if(ht_get(ht,token)==NULL){
-            ht_set(ht,token,"1");
-        }
-        else{
-            int count=atoi(ht_get(ht,token))+1;
-            char  *buf=malloc(32);
-            snprintf(buf, sizeof(buf), "%d", count);
-            ht_set(ht,token,buf);
-            free(buf);
-        }
-        pthread_mutex_unlock(&hashTable_mutex);
+//        char * token=tokens[index];
+//
+//        pthread_mutex_lock(&hashTable_mutex);
+//        if(ht_get(ht,token)==NULL){
+//            ht_set(ht,token,"1");
+//        }
+//        else{
+//            int count=atoi(ht_get(ht,token))+1;
+//            char  *buf=malloc(32);
+//            snprintf(buf, sizeof(buf), "%d", count);
+//            ht_set(ht,token,buf);
+//            free(buf);
+//        }
+//        pthread_mutex_unlock(&hashTable_mutex);
 
         index++;
     }
 
+
+    printf("This is the number of words greater than 6: %d\n",index);
+
     //Free the file content buffer
     free(fileContent);
+//    fileContent=NULL;
     free(tokens);
 
 

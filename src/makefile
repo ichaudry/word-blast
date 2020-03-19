@@ -4,4 +4,4 @@ compile_program:
 	@gcc main.c hashtable.c -o main
 
 run_program:
-	@./main WarAndPeace.txt 8
+	@./main WarAndPeace.txt 1
