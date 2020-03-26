@@ -15,7 +15,7 @@
 #include <ctype.h>
 #include "hashtable.h"
 
-#define TOKENIZER_BUFFER_SIZE 64
+#define TOKENIZER_BUFFER_SIZE 1024
 #define TOKENIZER_DELIMITER " \t\v\n\r,.;:-'\"!?/()[]{}*''""—"
 
 
