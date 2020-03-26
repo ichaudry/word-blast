@@ -312,8 +312,8 @@ char **tokenizeFileContents(char *fileContent)
         exit(EXIT_FAILURE);
     }
 
-    token = strtok_r(fileContent, TOKENIZER_DELIMITER,&savePtr);
-    while (token != NULL) {
+//    token = strtok_r(fileContent, TOKENIZER_DELIMITER,&savePtr);
+    while ((token = strtok_r(fileContent, TOKENIZER_DELIMITER,&savePtr))) {
 //        printf("The token is: %s and the string length is: %lu\n",token,strlen(token));
 
         if(strlen(token)>5){
@@ -325,6 +325,7 @@ char **tokenizeFileContents(char *fileContent)
 //            printf("The token after conversion is : %s\n",token);
             tokens[position] = token;
             position++;
+
         }
 
         if (position >= bufferSize) {
@@ -336,7 +337,8 @@ char **tokenizeFileContents(char *fileContent)
             }
         }
 
-        token = strtok_r(NULL, TOKENIZER_DELIMITER,&savePtr);
+        fileContent=savePtr;
+//        token = strtok_r(NULL, TOKENIZER_DELIMITER,&savePtr);
     }
 
     tokens[position] = NULL;
