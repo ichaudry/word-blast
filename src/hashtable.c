@@ -212,10 +212,10 @@ void ht_free(ht_t *hashtable) {
     free(hashtable);
 
     // set each to null (needed for proper operation)
-    int i = 0;
-    for (; i < TABLE_SIZE; ++i) {
-        hashtable->entries[i] = NULL;
-    }
+//    int i = 0;
+//    for (; i < TABLE_SIZE; ++i) {
+//        hashtable->entries[i] = NULL;
+//    }
 
 }
 
