@@ -102,18 +102,20 @@ int main(int argc, char ** argv){
 
     printf("This is the chunk size: %lu\n\n\n", chunkSize);
 
+    threadArgs *threadArgs=malloc(sizeof(threadArgs));
+
     /* spawn the threads */
     for (i=0; i<nThreads; i++)
     {
         //Thread arguments structure
-        threadArgs *threadArgs=malloc(sizeof(threadArgs));
+//        threadArgs *threadArgs=malloc(sizeof(threadArgs));
         threadArgs->start=i*chunkSize;
         threadArgs->end=(i*chunkSize)+chunkSize;
 
 
         printf("spawning thread %d\n", i+1);
-//        printf("The start of file for this thread is: %lu\n",threadArgs.start);
-//        printf("The end of file for this thread is: %lu\n",threadArgs.end);
+        printf("The start of file for this thread is: %lu\n",threadArgs->start);
+        printf("The end of file for this thread is: %lu\n",threadArgs->end);
         //Catch error by checking if rc is equal to zero
         rc = pthread_create(&threads[i], NULL, processFile, (void *) threadArgs);
         if(rc!=0){
@@ -121,11 +123,18 @@ int main(int argc, char ** argv){
         }
 
         //Call to free threadArgs after creation of last thread
-        if(i==nThreads-1){
-            free(threadArgs);
-        }
+//        if(i==nThreads-1){
+//            free(threadArgs);
+//            threadArgs=NULL;
+//        }
     }
 
+    free(threadArgs);
+    threadArgs=NULL;
+
+    int threadTerminated=0;
+
+//    while(threadTerminated<nThreads){
     /* wait for threads to finish */
     for (i=0; i<nThreads; i++) {
         //catch error by checking if rc is equal to zero
@@ -134,26 +143,22 @@ int main(int argc, char ** argv){
             printf("Error joining thread %d\n",i);
             printf("Error code: %d\n",rc);
         }
+        else{
+            threadTerminated++;
+
+        }
     }
+
+    printf("Number of Threads Terminated: %d\n",threadTerminated);
+//    }
 
     pthread_mutex_destroy(&hashTable_mutex);
 
 
-
-
-
-
-
-
-
-
-
-
-    printf("The frequency of Pierre is : %s\n", ht_get(ht,"prince"));
+    printf("The frequency of Prince is : %s\n", ht_get(ht,"prince"));
 
     //To-do check if the hashtable has been successfully freed
     ht_free(ht);
-
 
 
 
@@ -193,14 +198,17 @@ void *processFile(void *arguments)
     int index=0;
 
 
-//    printf("Start: %lu\n",start);
-//    printf("End: %lu\n",end);
+    printf("Start: %lu\n",start);
+    printf("End: %lu\n\n",end);
 
+
+    printf("Step 1\n");
     //Read file to buffer
     char * fileContent= readFile(filePointer,start,end);
 
 //    printf("This is the size of file buffer: %lu\n",strlen(fileContent));
 
+    printf("Step 2\n");
     //Tokenize file contents
     char **tokens=tokenizeFileContents(fileContent);
 
@@ -228,7 +236,7 @@ void *processFile(void *arguments)
     }
 
 
-    printf("This is the number of words greater than 6: %d\n",index);
+//    printf("This is the number of words greater than 6: %d\n",index);
 
     //Free the file content buffer
     free(fileContent);
@@ -252,6 +260,9 @@ void *processFile(void *arguments)
  * @return fileSize
  */
 char * readFile(void * filePointer,long start, long end){
+    printf("The Read File function received:\nStart:%lu\nEnd:%lu\n-------------\n\n",start,end);
+
+
     char * fileContent = 0;
     filePointer = fopen (filePath, "r");
     long chunkSize= end-start;
