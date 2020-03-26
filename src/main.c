@@ -102,20 +102,20 @@ int main(int argc, char ** argv){
 
     printf("This is the chunk size: %lu\n\n\n", chunkSize);
 
-    threadArgs *threadArgs=malloc(sizeof(threadArgs));
-
+//    threadArgs *threadArgs=malloc(sizeof(threadArgs));
+    threadArgs *threadArgs;
     /* spawn the threads */
     for (i=0; i<nThreads; i++)
     {
         //Thread arguments structure
-//        threadArgs *threadArgs=malloc(sizeof(threadArgs));
+        threadArgs=malloc(sizeof(threadArgs));
         threadArgs->start=i*chunkSize;
         threadArgs->end=(i*chunkSize)+chunkSize;
 
 
-        printf("spawning thread %d\n", i+1);
-        printf("The start of file for this thread is: %lu\n",threadArgs->start);
-        printf("The end of file for this thread is: %lu\n",threadArgs->end);
+//        printf("spawning thread %d\n", i+1);
+//        printf("The start of file for this thread is: %lu\n",threadArgs->start);
+//        printf("The end of file for this thread is: %lu\n",threadArgs->end);
         //Catch error by checking if rc is equal to zero
         rc = pthread_create(&threads[i], NULL, processFile, (void *) threadArgs);
         if(rc!=0){
@@ -129,8 +129,11 @@ int main(int argc, char ** argv){
 //        }
     }
 
-    free(threadArgs);
-    threadArgs=NULL;
+
+
+
+
+//    threadArgs=NULL;
 
     int threadTerminated=0;
 
@@ -159,6 +162,9 @@ int main(int argc, char ** argv){
 
     //To-do check if the hashtable has been successfully freed
     ht_free(ht);
+
+
+    free(threadArgs);
 
 
 
@@ -202,13 +208,13 @@ void *processFile(void *arguments)
     printf("End: %lu\n\n",end);
 
 
-    printf("Step 1\n");
+//    printf("Step 1\n");
     //Read file to buffer
     char * fileContent= readFile(filePointer,start,end);
 
 //    printf("This is the size of file buffer: %lu\n",strlen(fileContent));
 
-    printf("Step 2\n");
+//    printf("Step 2\n");
     //Tokenize file contents
     char **tokens=tokenizeFileContents(fileContent);
 
@@ -260,7 +266,7 @@ void *processFile(void *arguments)
  * @return fileSize
  */
 char * readFile(void * filePointer,long start, long end){
-    printf("The Read File function received:\nStart:%lu\nEnd:%lu\n-------------\n\n",start,end);
+//    printf("The Read File function received:\nStart:%lu\nEnd:%lu\n-------------\n\n",start,end);
 
 
     char * fileContent = 0;
