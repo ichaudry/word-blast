@@ -23,7 +23,10 @@
  * Struct for passing in arguments to threads
  */
 typedef struct {
+    //Start point of file chunk to read
     unsigned long start;
+
+    //End point of file chunk to read
     unsigned long end;
 } threadArgs;
 
@@ -36,20 +39,44 @@ char * filePath;
 
 //Mutex to lock hash table to protect against race conditions
 pthread_mutex_t hashTable_mutex;
+
+pthread_mutex_t hashTable_write_mutex_1;
+
+pthread_mutex_t hashTable_write_mutex;
+
+
+
+//Hash Table to store frequencies
 ht_t *ht;
 
-//Function declarations
+/**Function declarations
+ *
+ */
 void *processFile(void *arguments);
 char * readFile(void * filePointer,long start, long end);
 char **tokenizeFileContents(char *fileContent);
+char * test(char * temp, char * buf);
 
 
 int main(int argc, char ** argv){
+    //Initializing a clock to calculate program processing time
     struct timespec startTime;
     struct timespec endTime;
     clock_gettime(CLOCK_REALTIME, &startTime);
 
+
+    //Initializing mutex lock
     if (pthread_mutex_init(&hashTable_mutex, NULL) != 0) {
+        printf("\n mutex init has failed\n");
+        return 1;
+    }
+
+    if (pthread_mutex_init(&hashTable_write_mutex_1, NULL) != 0) {
+        printf("\n mutex init has failed\n");
+        return 1;
+    }
+
+    if (pthread_mutex_init(&hashTable_write_mutex, NULL) != 0) {
         printf("\n mutex init has failed\n");
         return 1;
     }
@@ -57,9 +84,11 @@ int main(int argc, char ** argv){
     //Number of threads
     int nThreads;
 
-    //Threads
-    pthread_t * threads = malloc(sizeof(pthread_t)* nThreads *10);
-    int rc, i;
+    //Pointer to track threads
+    pthread_t * threads = malloc(sizeof(pthread_t)* nThreads *20);
+
+    //Return value from thread creation and joining
+    int rc;
 
     //File Pointer
     FILE * filePointer;
@@ -69,22 +98,25 @@ int main(int argc, char ** argv){
 
 
 
-    //Get command line arguments to know which file to read and how many threads to create
+    //Get command line arguments to initialize file path and number of threads
     if(argc == 3){
         filePath=argv[1];
         nThreads=atoi(argv[2]);
-//        printf("The following arguments were passed into program %s , %d\n",filePath,nThreads);
     }
+
     else{
         printf("Wrong format for passing arguments. Please follow the following convention \n<name of executable> <filePath> <numberOfThreads>");
         return 0;
     }
 
 
-    //Getting the file size and calculating chunk size to pass to individual threads
+    //Total File Size
     long fileSize;
+
+    //Chunk Size for each thread
     long chunkSize;
 
+    //Open file to initialize file size
     filePointer = fopen (filePath, "r");
 
     //Check if file was successfully opened
@@ -97,17 +129,17 @@ int main(int argc, char ** argv){
         perror("Error");
     }
 
-    printf("This the size of the file %lu\n",fileSize);
-
-    //Initialize the chunk size using the file size and the number of threads the program runs
+    //Initialize chunk size
     chunkSize=fileSize/nThreads;
+
+    printf("This the size of the file %lu\n",fileSize);
 
     printf("This is the chunk size: %lu\n\n\n", chunkSize);
 
 //    threadArgs *threadArgs=malloc(sizeof(threadArgs));
     threadArgs *threadArgs;
     /* spawn the threads */
-    for (i=0; i<nThreads; i++)
+    for (int i=0; i<nThreads; i++)
     {
         //Thread arguments structure
         threadArgs=malloc(sizeof(threadArgs));
@@ -139,7 +171,7 @@ int main(int argc, char ** argv){
 
 //    while(threadTerminated<nThreads){
     /* wait for threads to finish */
-    for (i=0; i<nThreads; i++) {
+    for (int i=0; i<nThreads; i++) {
         //catch error by checking if rc is equal to zero
         rc = pthread_join(threads[i], NULL);
         if(rc!=0){
@@ -240,17 +272,35 @@ void *processFile(void *arguments)
         char * token=tokens[index];
 
         pthread_mutex_lock(&hashTable_mutex);
-        if(ht_get(ht,token)==NULL){
+        char * temp= ht_get(ht,token);
+//        pthread_mutex_unlock(&hashTable_mutex);
+
+        if(temp==NULL){
+
             ht_set(ht,token,"1");
+            pthread_mutex_unlock(&hashTable_mutex);
+
         }
+
         else{
-            int count=atoi(ht_get(ht,token))+1;
-            char  *buf=malloc(32);
-            snprintf(buf, sizeof(buf), "%d", count);
-            ht_set(ht,token,buf);
-            free(buf);
+            pthread_mutex_unlock(&hashTable_mutex);
+
+//            pthread_mutex_lock(&hashTable_write_mutex_1);
+            pthread_mutex_lock(&hashTable_write_mutex);
+//            int count=atoi(ht_get(ht,token))+1;
+//
+            char buf[32];
+//
+//            snprintf(buf, sizeof(buf), "%d", count);
+//            pthread_mutex_unlock(&hashTable_write_mutex_1);
+//            pthread_mutex_lock(&hashTable_write_mutex);
+            ht_set(ht,token,test(ht_get(ht,token),buf));
+//            ht_set(ht,token,buf);
+            pthread_mutex_unlock(&hashTable_write_mutex);
+
+//            free(buf);
         }
-        pthread_mutex_unlock(&hashTable_mutex);
+
 
         index++;
     }
@@ -266,6 +316,15 @@ void *processFile(void *arguments)
 
 
     return NULL;
+}
+
+char * test(char * temp, char * buf){
+    int count=atoi(temp)+1;
+
+    snprintf(buf, sizeof(buf), "%d", count);
+//    printf("gets her \n");
+
+    return buf;
 }
 
 
