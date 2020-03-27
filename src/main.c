@@ -124,9 +124,9 @@ int main(int argc, char ** argv){
     //Initialize chunk size
     chunkSize=fileSize/nThreads;
 
-    printf("This the size of the file %lu\n",fileSize);
-
-    printf("This is the chunk size: %lu\n\n", chunkSize);
+//    printf("This the size of the file %lu\n",fileSize);
+//
+//    printf("This is the chunk size: %lu\n\n", chunkSize);
 
 
     //Thread argument structure
@@ -147,6 +147,8 @@ int main(int argc, char ** argv){
 
     }
 
+    printf("\nThe file processing started using %d thread.\n\n",nThreads);
+
     //Counter to check how many threads were terminated
     int threadTerminated=0;
 
@@ -163,7 +165,7 @@ int main(int argc, char ** argv){
         }
     }
 
-    printf("Number of Threads Terminated: %d\n\n",threadTerminated);
+//    printf("Number of Threads Terminated: %d\n\n",threadTerminated);
 
     /*Destroy mutexes*/
     pthread_mutex_destroy(&hashTable_mutex);
@@ -175,11 +177,12 @@ int main(int argc, char ** argv){
 
     get_top_10(ht,top10);
 
+    printf("Top 10:\n");
     for(int i=0 ; i<10;i++){
         printf("%s   -   %d\n",top10[i].key,atoi(top10[i].value));
     }
 
-
+    printf("\nThe file processing completed using %d thread.\n\n",nThreads);
 
     /**
     *Free memory allocated for the hashtable. 
@@ -201,7 +204,7 @@ int main(int argc, char ** argv){
         n_sec = n_sec + 1000000000L;
         }
 
-    printf("Total Time was %ld.%09ld seconds\n", sec, n_sec);
+    printf("Total Time was %ld.%09ld seconds\n\n", sec, n_sec);
 
     return 0;
 
