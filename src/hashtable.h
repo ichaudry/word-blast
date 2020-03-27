@@ -26,6 +26,7 @@ void ht_set(ht_t *hashtable, const char *key, const char *value);
 char *ht_get(ht_t *hashtable, const char *key);
 void ht_del(ht_t *hashtable, const char *key);
 void ht_dump(ht_t *hashtable);
+void findTop10(ht_t *hashtable, entry_t top10[]);
 void ht_free(ht_t *hashtable);
 
 

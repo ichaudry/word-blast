@@ -7,8 +7,5 @@ include_directories(.)
 
 add_executable(src
         hashtable.c
-        hashtable.h
         main.c
-        makefile
-        test.txt
-        WarAndPeace.txt)
+        )

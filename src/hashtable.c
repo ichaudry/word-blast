@@ -219,3 +219,32 @@ void ht_free(ht_t *hashtable) {
 
 }
 
+
+void findTop10(ht_t *hashtable, entry_t top10[]){
+    int max = 0;
+    int prevMax = 2000000;
+    int value;
+    int j = 0;
+    entry_t valueToPutInArray;
+    while(j < 10){
+        for(int i = 0; i < TABLE_SIZE; i++){
+            entry_t *entry = hashtable ->entries[i];
+            if(entry == NULL){
+                continue;
+            }
+            value = atoi(entry->value);
+            if(value > max && value < prevMax){
+                max = value;
+                valueToPutInArray.key = entry->key;
+                valueToPutInArray.value = entry->value;
+                valueToPutInArray.next = NULL;
+            }
+        }
+        top10[j] = valueToPutInArray;
+        prevMax = max;
+        max = 0;
+        j++;
+    }
+}
+
+

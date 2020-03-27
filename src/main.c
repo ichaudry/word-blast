@@ -15,7 +15,7 @@
 #include <ctype.h>
 #include "hashtable.h"
 
-#define TOKENIZER_BUFFER_SIZE 1024
+#define TOKENIZER_BUFFER_SIZE 64
 #define TOKENIZER_DELIMITER " \t\v\n\r,.;:-'\"!?/()[]{}*''""—"
 
 
@@ -29,9 +29,12 @@ typedef struct {
 
 
 /**
- * Global variable for file path accessible by all threads
+ * Global variables
  */
+ //File Path
 char * filePath;
+
+//Mutex to lock hash table to protect against race conditions
 pthread_mutex_t hashTable_mutex;
 ht_t *ht;
 
@@ -55,7 +58,7 @@ int main(int argc, char ** argv){
     int nThreads;
 
     //Threads
-    pthread_t threads[nThreads];
+    pthread_t * threads = malloc(sizeof(pthread_t)* nThreads *10);
     int rc, i;
 
     //File Pointer
@@ -63,8 +66,7 @@ int main(int argc, char ** argv){
 
     //Hash Table that stores final frequencies
     ht= ht_create();
-//    ht_set(ht,"hello world","1");
-//    ht_dump(ht);
+
 
 
     //Get command line arguments to know which file to read and how many threads to create
@@ -131,8 +133,6 @@ int main(int argc, char ** argv){
 
 
 
-
-
 //    threadArgs=NULL;
 
     int threadTerminated=0;
@@ -160,11 +160,25 @@ int main(int argc, char ** argv){
 
     printf("The frequency of Prince is : %s\n", ht_get(ht,"prince"));
 
+
+    entry_t  top10[10];
+
+    findTop10(ht,top10);
+
+
+
+    for(int i=0 ; i<10;i++){
+//        char word=top10[i].key;
+
+
+        printf("%s   -   %d\n",top10[i].key,atoi(top10[i].value));
+
+    }
+
+
+
     //To-do check if the hashtable has been successfully freed
     ht_free(ht);
-
-
-    free(threadArgs);
 
 
 
@@ -247,6 +261,8 @@ void *processFile(void *arguments)
     //Free the file content buffer
     free(fileContent);
     free(tokens);
+    free(args);
+
 
 
     return NULL;
