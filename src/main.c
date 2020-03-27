@@ -19,6 +19,7 @@
 #define TOKENS_BUFFER 64
 #define TOKENS_DELIMITER " \t\v\n\r,.;:-'\"!?/()[]{}*''""—"
 
+
 /**
  * Struct for passing in arguments to threads
  */
@@ -39,8 +40,6 @@ char * filePath;
 
 //Mutex to lock hash table to protect against race conditions
 pthread_mutex_t hashTable_mutex;
-
-pthread_mutex_t hashTable_write_mutex_1;
 
 pthread_mutex_t hashTable_write_mutex;
 
@@ -66,11 +65,6 @@ int main(int argc, char ** argv){
 
     //Initializing mutex lock
     if (pthread_mutex_init(&hashTable_mutex, NULL) != 0) {
-        printf("\n mutex init has failed\n");
-        return 1;
-    }
-
-    if (pthread_mutex_init(&hashTable_write_mutex_1, NULL) != 0) {
         printf("\n mutex init has failed\n");
         return 1;
     }
@@ -132,7 +126,7 @@ int main(int argc, char ** argv){
 
     printf("This the size of the file %lu\n",fileSize);
 
-    printf("This is the chunk size: %lu\n\n\n", chunkSize);
+    printf("This is the chunk size: %lu\n\n", chunkSize);
 
 
     //Thread argument structure
@@ -169,21 +163,23 @@ int main(int argc, char ** argv){
         }
     }
 
-
-    printf("Number of Threads Terminated: %d\n",threadTerminated);
+    printf("Number of Threads Terminated: %d\n\n",threadTerminated);
 
     /*Destroy mutexes*/
     pthread_mutex_destroy(&hashTable_mutex);
+    pthread_mutex_destroy(&hashTable_write_mutex);
 
 
+    //Print Top 10 occurring words
     entry_t  top10[10];
 
-    findTop10(ht,top10);
+    get_top_10(ht,top10);
 
     for(int i=0 ; i<10;i++){
         printf("%s   -   %d\n",top10[i].key,atoi(top10[i].value));
-
     }
+
+
 
     /**
     *Free memory allocated for the hashtable. 
@@ -238,28 +234,38 @@ void *processFile(void *arguments)
         if(tokens[index]==NULL){
             break;
         }
+
+        //Get token
         char * token=tokens[index];
 
-        
+        //Lock the read operation
         pthread_mutex_lock(&hashTable_mutex);
         if(ht_get(ht,token)==NULL){
 
             ht_set(ht,token,"1");
 
+            //unlock read
             pthread_mutex_unlock(&hashTable_mutex);
-            // pthread_mutex_lock(&hashTable_write_mutex);
         }
 
         else{
+            //Unlock read
             pthread_mutex_unlock(&hashTable_mutex);
+
+            //Lock the write operation
             pthread_mutex_lock(&hashTable_write_mutex);
+
             int count=atoi(ht_get(ht,token))+1;
+
             char buf[32];
+
             snprintf(buf, sizeof(buf), "%d", count);
-            ht_set(ht,token,buf);
+
+            //Set new frequency
+            ht_set(ht, token, buf);
+
             pthread_mutex_unlock(&hashTable_write_mutex);
         }
-        // pthread_mutex_unlock(&hashTable_write_mutex);
         index++;
     }
 
@@ -269,15 +275,6 @@ void *processFile(void *arguments)
     free(args);
 
     return NULL;
-}
-
-char * test(char * temp, char * buf){
-    int count=atoi(temp)+1;
-
-    snprintf(buf, sizeof(buf), "%d", count);
-//    printf("gets her \n");
-
-    return buf;
 }
 
 
@@ -318,7 +315,11 @@ char * readFile(void * filePointer,long start, long end){
     return fileContent;
 }
 
-
+/**
+ *
+ * @param fileContent
+ * @return
+ */
 char **tokenizeFileContents(char *fileContent)
 {
     int bufferSize = TOKENS_BUFFER, position = 0;

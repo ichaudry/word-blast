@@ -17,7 +17,7 @@
 #include <string.h>
 #include "hashtable.h"
 
-#define TABLE_SIZE 1000000
+#define TABLE_SIZE 20000
 
 
 unsigned int hash(const char *key) {
@@ -268,30 +268,52 @@ void ht_free(ht_t *hashtable) {
 
 
 
-void findTop10(ht_t *hashtable, entry_t top10[]){
+void get_top_10(ht_t *hashtable, entry_t top10[]){
+
     int max = 0;
-    int prevMax = 2000000;
-    int value;
-    int j = 0;
+
+    //Initializing to large value at beginning to get most occurring word in first iteration
+    int previousMax = 2000000;
+
+    //
+    int frequency;
+
+
+
     entry_t valueToPutInArray;
-    while(j < 10){
+
+    for(int j=0; j<10;j++){
+        //iterate over hashtable entries
         for(int i = 0; i < TABLE_SIZE; i++){
             entry_t *entry = hashtable ->entries[i];
+
             if(entry == NULL){
                 continue;
             }
-            value = atoi(entry->value);
-            if(value > max && value < prevMax){
-                max = value;
+
+            //Frequency of entry
+            frequency = atoi(entry->value);
+
+
+            //Check if greater than current max
+            if(frequency > max && frequency < previousMax){
+                //Set new max
+                max = frequency;
+
+                //Initialize entry to put in array
                 valueToPutInArray.key = entry->key;
                 valueToPutInArray.value = entry->value;
                 valueToPutInArray.next = NULL;
             }
         }
+
+        //Set entry into array
         top10[j] = valueToPutInArray;
-        prevMax = max;
+
+        previousMax = max;
+
         max = 0;
-        j++;
+
     }
 }
 
