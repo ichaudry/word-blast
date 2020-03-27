@@ -210,27 +210,62 @@ void ht_dump(ht_t *hashtable) {
 }
 
 
+// void ht_free(ht_t *hashtable) {
+//     for (int i = 0; i < TABLE_SIZE; ++i) {
+//         entry_t *entry = hashtable->entries[i];
+
+//         if (entry == NULL) {
+//             continue;
+//         }
+
+//         ht_del(hashtable, entry->key);
+//     }
+
+//     free(hashtable->entries);
+//     free(hashtable);
+
+
+
+// }
+
 void ht_free(ht_t *hashtable) {
-    for (int i = 0; i < TABLE_SIZE; ++i) {
-        entry_t *entry = hashtable->entries[i];
+    if(!hashtable) return;
 
-        if (entry == NULL) {
-            continue;
-        }
+     size_t i = 0;
+     if(hashtable->entries)
+     {
+         //Free all entries
+         while(i < TABLE_SIZE)
+         {
+             if(hashtable->entries[i])
+             {
+                 if(hashtable->entries[i]->key)
+                 {
+                     free(hashtable->entries[i]->key);
+                     hashtable->entries[i]->key = NULL;
+                 }
+                 if(hashtable->entries[i]->value)
+                 {
+                     free(hashtable->entries[i]->value);
+                     hashtable->entries[i]->value = NULL;
+                 }
+                 free(hashtable->entries[i]);
+                 hashtable->entries[i] = NULL;
+             }
+             i++;
+         }
+         //Free the entry list pointer
+         free(hashtable->entries);
+         hashtable->entries = NULL;
+     }
 
-        ht_del(hashtable, entry->key);
-    }
-
-    free(hashtable->entries);
-    free(hashtable);
-
-    // set each to null (needed for proper operation)
-//    int i = 0;
-//    for (; i < TABLE_SIZE; ++i) {
-//        hashtable->entries[i] = NULL;
-//    }
+     //Free the hashtable pointer
+     free(hashtable);
+     hashtable = NULL;
+     return;
 
 }
+
 
 
 void findTop10(ht_t *hashtable, entry_t top10[]){

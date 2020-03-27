@@ -233,43 +233,33 @@ void *processFile(void *arguments)
     //Tokenize file contents
     char **tokens=tokenizeFileContents(fileContent);
 
-    //Loop to iterate over all tokens
+    //Loop to iterate over all tokens and store frequencies
     while(1){
         if(tokens[index]==NULL){
             break;
         }
         char * token=tokens[index];
 
+        
         pthread_mutex_lock(&hashTable_mutex);
-        // char * temp= ht_get(ht,token);
-//        pthread_mutex_unlock(&hashTable_mutex);
-
         if(ht_get(ht,token)==NULL){
 
             ht_set(ht,token,"1");
-            pthread_mutex_unlock(&hashTable_mutex);
 
+            pthread_mutex_unlock(&hashTable_mutex);
+            // pthread_mutex_lock(&hashTable_write_mutex);
         }
 
         else{
             pthread_mutex_unlock(&hashTable_mutex);
-
-//            pthread_mutex_lock(&hashTable_write_mutex_1);
             pthread_mutex_lock(&hashTable_write_mutex);
-//            int count=atoi(ht_get(ht,token))+1;
-//
+            int count=atoi(ht_get(ht,token))+1;
             char buf[32];
-//
-//            snprintf(buf, sizeof(buf), "%d", count);
-//            pthread_mutex_unlock(&hashTable_write_mutex_1);
-//            pthread_mutex_lock(&hashTable_write_mutex);
-            ht_set(ht,token,test(ht_get(ht,token),buf));
-            // ht_set(ht,token,"10");
-//            ht_set(ht,token,buf);
+            snprintf(buf, sizeof(buf), "%d", count);
+            ht_set(ht,token,buf);
             pthread_mutex_unlock(&hashTable_write_mutex);
-
-//            free(buf);
         }
+        // pthread_mutex_unlock(&hashTable_write_mutex);
         index++;
     }
 
@@ -289,7 +279,6 @@ char * test(char * temp, char * buf){
 
     return buf;
 }
-
 
 
 /**
