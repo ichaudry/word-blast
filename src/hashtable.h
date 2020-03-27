@@ -1,6 +1,12 @@
-//
-// Created by Ibraheem Chaudry on 3/13/20.
-//
+/**************************************************************
+* Class: CSC-415-01 Spring 2020
+* Name: Ibraheem Chaudry
+* Student ID: 917227459
+* Project: Assignment 2 – Word Blast
+* File: hashtable.h
+* Description: Header file for the hashtable.c
+* @author Ibraheem Chaudry
+* **************************************************************/
 
 #ifndef WORD_BLAST_HASHTABLE1_H
 #define WORD_BLAST_HASHTABLE1_H

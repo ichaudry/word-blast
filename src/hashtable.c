@@ -1,3 +1,16 @@
+/**************************************************************
+* Class: CSC-415-01 Spring 2020
+* Name: Ibraheem Chaudry
+* Student ID: 917227459
+* Project: Assignment 2 – Word Blast
+* File: hashtable.c
+* Description: Hashtable used to keep track of frequencies
+* @author Brian Seymour
+* @source https://github.com/engineer-man/youtube/tree/master/077
+* **************************************************************/
+
+
+
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
